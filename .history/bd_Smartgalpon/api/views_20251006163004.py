@@ -1,4 +1,3 @@
-import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import connection
@@ -23,6 +22,7 @@ def crearLote(request):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 def listarLotes(request):
+    def listar_lotes(request):
     with connection.cursor() as cursor:
         cursor.callproc('sp_listar_lotes')
         results = cursor.fetchall()
