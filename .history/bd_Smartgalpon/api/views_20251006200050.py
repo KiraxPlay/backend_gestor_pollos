@@ -3,8 +3,6 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-
 
 
 @csrf_exempt

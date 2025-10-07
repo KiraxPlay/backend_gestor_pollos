@@ -137,15 +137,6 @@ END$$
 DELIMITER ;
 
 
-/*#por el momento no se usara autenticacion ni permisos
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ]
-}
-
-*/
 
 /*en bd_Smartgalpon -> settings.py
 DATABASES = {

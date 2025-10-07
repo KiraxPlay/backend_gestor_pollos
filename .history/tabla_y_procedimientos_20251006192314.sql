@@ -98,55 +98,6 @@ END$$
 DELIMITER ;
 
 
---Ver detalles de lote
-DELIMITER $$
-
-CREATE PROCEDURE sp_detalle_lote(IN p_id_lote INT)
-BEGIN
-    -- Información del lote
-    SELECT * FROM lote WHERE id = p_id_lote;
-
-    -- Insumos asociados
-    SELECT * FROM insumos WHERE lotes_id = p_id_lote;
-
-    -- Registros de peso asociados
-    SELECT * FROM registro_peso WHERE lotes_id = p_id_lote;
-END$$
-
-DELIMITER ;
-
-
---Eliminar insumo y actualizar estado del lote si es necesario
-
-DELIMITER $$
-
-CREATE PROCEDURE sp_eliminar_insumo(
-    IN p_id_insumo INT,
-    IN p_id_lote INT
-)
-BEGIN
-    -- Eliminamos el insumo
-    DELETE FROM insumo WHERE id = p_id_insumo;
-
-    -- Si ya no quedan insumos, pasamos el lote a estado = 0
-    IF (SELECT COUNT(*) FROM insumo WHERE id_lote = p_id_lote) = 0 THEN
-        UPDATE lote SET estado = 0 WHERE id = p_id_lote;
-    END IF;
-END$$
-
-DELIMITER ;
-
-
-/*#por el momento no se usara autenticacion ni permisos
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ]
-}
-
-*/
-
 /*en bd_Smartgalpon -> settings.py
 DATABASES = {
     'default': {

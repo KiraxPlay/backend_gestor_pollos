@@ -1,0 +1,29 @@
+http://127.0.0.1:8000/api/lotes/  #tipo get
+
+http://127.0.0.1:8000/api/crearLote/ post
+body
+{
+  "cantidad_pollos": 22,
+  "precio_unitario": 2000,
+  "fecha_inicio": "2025-10-06"
+} #hice las pruebas con thunderclient
+
+
+
+http://127.0.0.1:8000/api/detalleLote/2/ GET
+
+http://127.0.0.1:8000/api/agregarInsumo/ post
+Body 
+{
+  "lotes_id": 1,
+  "nombre": "Concentrado 18%",
+  "cantidad": 50,
+  "unidad": "kg",
+  "precio": 2500,
+  "tipo": "Alimento",
+  "fecha": "2025-10-06"
+}
+
+  
+http://127.0.0.1:8000/api/eliminarInsumo/id_insumo/  DELETE
+

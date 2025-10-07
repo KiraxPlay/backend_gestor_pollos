@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
     ]
 }
 
-*/
+
 
 /*en bd_Smartgalpon -> settings.py
 DATABASES = {

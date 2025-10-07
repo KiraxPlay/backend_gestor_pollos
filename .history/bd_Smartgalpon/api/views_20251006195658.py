@@ -3,23 +3,22 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-
 
 
 @csrf_exempt
-@api_view(['DELETE'])
 def eliminar_insumo(request, insumo_id):
-    try:
-        body = json.loads(request.body)  # Convierte el JSON del body a diccionario
-        lote_id = body.get('lote_id')
+    if request.method == "DELETE":  # Mejor usar DELETE
+        try:
+            with connection.cursor() as cursor:
+                # Solo pasamos el ID del insumo
+                cursor.callproc("sp_eliminar_insumo", [insumo_id])
 
-        with connection.cursor() as cursor:
-            cursor.callproc('sp_eliminar_insumo', [lote_id, insumo_id])
+            return JsonResponse({"success": True, "mensaje": "Insumo eliminado"}, safe=False)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
 
-        return JsonResponse({'success': True})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
 
 
 def detalle_lote(request, lote_id):

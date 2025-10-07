@@ -2,25 +2,19 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import connection
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
 
 
-
-@csrf_exempt
-@api_view(['DELETE'])
-def eliminar_insumo(request, insumo_id):
-    try:
-        body = json.loads(request.body)  # Convierte el JSON del body a diccionario
-        lote_id = body.get('lote_id')
+def eliminar_insumo(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        id_insumo = data.get("id_insumo")
+        id_lote = data.get("id_lote")
 
         with connection.cursor() as cursor:
-            cursor.callproc('sp_eliminar_insumo', [lote_id, insumo_id])
+            cursor.callproc("sp_eliminar_insumo", [id_insumo, id_lote])
 
-        return JsonResponse({'success': True})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-
+        return JsonResponse({"mensaje": "Insumo eliminado y estado de lote actualizado"}, safe=False)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
 
 def detalle_lote(request, lote_id):
     try:
@@ -52,7 +46,7 @@ def detalle_lote(request, lote_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
-@csrf_exempt
+
 def agregar_insumo(request):
     if request.method == "POST":
         # Extraer datos del body (ejemplo con JSON)
@@ -85,28 +79,24 @@ def agregar_insumo(request):
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-@csrf_exempt
+
 def crearLote(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-
-            cantidad_pollos = data.get("cantidad_pollos")
-            precio_unitario = data.get("precio_unitario")
-            fecha_inicio = data.get("fecha_inicio")  # formato: "2025-10-06"
-
-            with connection.cursor() as cursor:
-                cursor.callproc("sp_crear_nuevo_lote", [cantidad_pollos, precio_unitario, fecha_inicio])
-                result = cursor.fetchall()
-                columns = [col[0] for col in cursor.description]
-                lote_data = [dict(zip(columns, row)) for row in result]
-
-            return JsonResponse({"success": True, "lote": lote_data}, safe=False)
-
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)}, status=400)
-
-    return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
+    if request.metho == 'POST':
+        data = json.loads(request.body)
+        
+        p_cantidad_pollos = data.get('cantidad_pollos')
+        p_precio_unitario = data.get('precio_unitario')
+        p_fecha_inicio = data.get('fecha_inicio')
+        
+        with connection.cursor() as cursor:
+            cursor.callproc('crearLote', [p_cantidad_pollos, p_precio_unitario, p_fecha_inicio])
+            result = cursor.fetchall()
+            
+        columns = [col[0] for col in cursor.description]
+        lote = [dict(zip(columns, row)) for row in result]
+        
+        return JsonResponse(lote, safe=False)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 def listarLotes(request):
     with connection.cursor() as cursor:

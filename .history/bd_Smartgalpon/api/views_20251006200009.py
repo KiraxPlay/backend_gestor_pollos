@@ -3,11 +3,14 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-
 
 
 @csrf_exempt
+
+from django.http import JsonResponse
+from django.db import connection
+from rest_framework.decorators import api_view
+
 @api_view(['DELETE'])
 def eliminar_insumo(request, insumo_id):
     try:
@@ -20,6 +23,7 @@ def eliminar_insumo(request, insumo_id):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
 
 
 def detalle_lote(request, lote_id):

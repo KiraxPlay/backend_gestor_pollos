@@ -71,81 +71,12 @@ BEGIN
 END$$
 DELIMITER ;
 
---Agregar insumo y actualizar estado del lote
+--Actualizar estado del lote
 DELIMITER $$
-
-CREATE PROCEDURE sp_agregar_insumo(
-    IN p_id_lote INT,
-    IN p_nombre VARCHAR(100),
-    IN p_tipo VARCHAR(50),
-    IN p_cantidad INT,
-    IN p_precio DECIMAL(10,2)
+CREATE PROCEDURE sp_actualizar_estado_lote(
+    IN p_lote_id INT,
+    IN p_nuevo_estado TINYINT
 )
-BEGIN
-    -- Insertamos el insumo
-    INSERT INTO insumo (id_lote, nombre, tipo, cantidad, precio)
-    VALUES (p_id_lote, p_nombre, p_tipo, p_cantidad, p_precio);
-
-    -- Actualizamos el estado del lote a 1 (activo)
-    UPDATE lote
-    SET estado = 1
-    WHERE id = p_id_lote;
-
-    -- Devolvemos el insumo agregado
-    SELECT * FROM insumo WHERE id = LAST_INSERT_ID();
-END$$
-
-DELIMITER ;
-
-
---Ver detalles de lote
-DELIMITER $$
-
-CREATE PROCEDURE sp_detalle_lote(IN p_id_lote INT)
-BEGIN
-    -- Información del lote
-    SELECT * FROM lote WHERE id = p_id_lote;
-
-    -- Insumos asociados
-    SELECT * FROM insumos WHERE lotes_id = p_id_lote;
-
-    -- Registros de peso asociados
-    SELECT * FROM registro_peso WHERE lotes_id = p_id_lote;
-END$$
-
-DELIMITER ;
-
-
---Eliminar insumo y actualizar estado del lote si es necesario
-
-DELIMITER $$
-
-CREATE PROCEDURE sp_eliminar_insumo(
-    IN p_id_insumo INT,
-    IN p_id_lote INT
-)
-BEGIN
-    -- Eliminamos el insumo
-    DELETE FROM insumo WHERE id = p_id_insumo;
-
-    -- Si ya no quedan insumos, pasamos el lote a estado = 0
-    IF (SELECT COUNT(*) FROM insumo WHERE id_lote = p_id_lote) = 0 THEN
-        UPDATE lote SET estado = 0 WHERE id = p_id_lote;
-    END IF;
-END$$
-
-DELIMITER ;
-
-
-/*#por el momento no se usara autenticacion ni permisos
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ]
-}
-
-*/
 
 /*en bd_Smartgalpon -> settings.py
 DATABASES = {
