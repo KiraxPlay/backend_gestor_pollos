@@ -241,6 +241,171 @@ CREATE TABLE insumos_ponedora (
         ON DELETE CASCADE
 );
 
+-- Tabla para precios de venta de huevos
+CREATE TABLE precio_venta_huevos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lote_id INT NOT NULL,
+    precio_por_huevo DECIMAL(10,2) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (lote_id) REFERENCES lote_ponedora(id)
+);
+
+-- Tabla para costos adicionales
+CREATE TABLE costos_adicionales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lote_id INT NOT NULL,
+    descripcion VARCHAR(200) NOT NULL,
+    costo DECIMAL(10,2) NOT NULL,
+    fecha DATE NOT NULL,
+    tipo ENUM('Mano de obra', 'Energía', 'Agua', 'Mantenimiento', 'Otros') DEFAULT 'Otros',
+    FOREIGN KEY (lote_id) REFERENCES lote_ponedora(id)
+);
+
+
+DELIMITER //
+CREATE PROCEDURE sp_agregar_costo_adicional(
+    IN p_lote_id INT,
+    IN p_descripcion VARCHAR(200),
+    IN p_costo DECIMAL(10,2),
+    IN p_fecha DATE,
+    IN p_tipo ENUM('Mano de obra', 'Energía', 'Agua', 'Mantenimiento', 'Otros')
+)
+BEGIN
+    INSERT INTO costos_adicionales (lote_id, descripcion, costo, fecha, tipo)
+    VALUES (p_lote_id, p_descripcion, p_costo, p_fecha, p_tipo);
+    
+    SELECT LAST_INSERT_ID() AS costo_id;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE sp_calcular_ganancia_lote(
+    IN p_lote_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE
+)
+BEGIN
+    SELECT 
+        -- Ingresos por venta de huevos
+        (SELECT IFNULL(SUM(rh.cantidad_huevos * pvh.precio_por_huevo), 0)
+         FROM registro_huevos rh
+         JOIN precio_venta_huevos pvh ON rh.lote_id = pvh.lote_id
+         WHERE rh.lote_id = p_lote_id 
+           AND rh.fecha BETWEEN p_fecha_inicio AND p_fecha_fin
+           AND rh.fecha BETWEEN pvh.fecha_inicio AND IFNULL(pvh.fecha_fin, CURDATE()))
+        AS ingresos_huevos,
+        
+        -- Costo de insumos
+        (SELECT IFNULL(SUM(ip.cantidad * ip.precio), 0)
+         FROM insumos_ponedora ip
+         WHERE ip.lotes_id = p_lote_id 
+           AND ip.fecha BETWEEN p_fecha_inicio AND p_fecha_fin)
+        AS costo_insumos,
+        
+        -- Costos adicionales
+        (SELECT IFNULL(SUM(ca.costo), 0)
+         FROM costos_adicionales ca
+         WHERE ca.lote_id = p_lote_id 
+           AND ca.fecha BETWEEN p_fecha_inicio AND p_fecha_fin)
+        AS costos_adicionales,
+        
+        -- Ganancia neta
+        ((SELECT IFNULL(SUM(rh.cantidad_huevos * pvh.precio_por_huevo), 0)
+          FROM registro_huevos rh
+          JOIN precio_venta_huevos pvh ON rh.lote_id = pvh.lote_id
+          WHERE rh.lote_id = p_lote_id 
+            AND rh.fecha BETWEEN p_fecha_inicio AND p_fecha_fin
+            AND rh.fecha BETWEEN pvh.fecha_inicio AND IFNULL(pvh.fecha_fin, CURDATE())))
+        - 
+        ((SELECT IFNULL(SUM(ip.cantidad * ip.precio), 0)
+          FROM insumos_ponedora ip
+          WHERE ip.lotes_id = p_lote_id 
+            AND ip.fecha BETWEEN p_fecha_inicio AND p_fecha_fin)
+         +
+        (SELECT IFNULL(SUM(ca.costo), 0)
+         FROM costos_adicionales ca
+         WHERE ca.lote_id = p_lote_id 
+           AND ca.fecha BETWEEN p_fecha_inicio AND p_fecha_fin))
+        AS ganancia_neta;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE sp_establecer_precio_huevo(
+    IN p_lote_id INT,
+    IN p_precio_por_huevo DECIMAL(10,2),
+    IN p_fecha_inicio DATE
+)
+BEGIN
+    -- Desactivar precios anteriores del mismo lote
+    UPDATE precio_venta_huevos 
+    SET activo = FALSE, fecha_fin = DATE_SUB(p_fecha_inicio, INTERVAL 1 DAY)
+    WHERE lote_id = p_lote_id AND activo = TRUE;
+    
+    -- Insertar nuevo precio
+    INSERT INTO precio_venta_huevos (lote_id, precio_por_huevo, fecha_inicio, activo)
+    VALUES (p_lote_id, p_precio_por_huevo, p_fecha_inicio, TRUE);
+    
+    SELECT LAST_INSERT_ID() AS precio_id;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE sp_resumen_ganancia_lote(IN p_lote_id INT)
+BEGIN
+    SELECT 
+        lp.id,  -- ← ¡AGREGA ESTA LÍNEA!
+        lp.nombre,
+        lp.cantidad_gallinas,
+        lp.fecha_inicio,
+        
+        -- Total huevos producidos
+        (SELECT IFNULL(SUM(cantidad_huevos), 0) 
+         FROM registro_huevos 
+         WHERE lote_id = p_lote_id) AS total_huevos,
+        
+        -- Ingresos totales
+        (SELECT IFNULL(SUM(rh.cantidad_huevos * pvh.precio_por_huevo), 0)
+         FROM registro_huevos rh
+         JOIN precio_venta_huevos pvh ON rh.lote_id = pvh.lote_id
+         WHERE rh.lote_id = p_lote_id
+           AND rh.fecha BETWEEN pvh.fecha_inicio AND IFNULL(pvh.fecha_fin, CURDATE()))
+        AS ingresos_totales,
+        
+        -- Costos totales
+        (SELECT IFNULL(SUM(ip.cantidad * ip.precio), 0)
+         FROM insumos_ponedora ip
+         WHERE ip.lotes_id = p_lote_id)
+        +
+        (SELECT IFNULL(SUM(ca.costo), 0)
+         FROM costos_adicionales ca
+         WHERE ca.lote_id = p_lote_id)
+        AS costos_totales,
+        
+        -- Ganancia total
+        ((SELECT IFNULL(SUM(rh.cantidad_huevos * pvh.precio_por_huevo), 0)
+          FROM registro_huevos rh
+          JOIN precio_venta_huevos pvh ON rh.lote_id = pvh.lote_id
+          WHERE rh.lote_id = p_lote_id
+            AND rh.fecha BETWEEN pvh.fecha_inicio AND IFNULL(pvh.fecha_fin, CURDATE())))
+        -
+        ((SELECT IFNULL(SUM(ip.cantidad * ip.precio), 0)
+          FROM insumos_ponedora ip
+          WHERE ip.lotes_id = p_lote_id)
+         +
+        (SELECT IFNULL(SUM(ca.costo), 0)
+         FROM costos_adicionales ca
+         WHERE ca.lote_id = p_lote_id))
+        AS ganancia_total
+        
+    FROM lote_ponedora lp
+    WHERE lp.id = p_lote_id;
+END //
+DELIMITER ;
+
 --Procedimientos almacenados para ponedoras
 DELIMITER //
 CREATE PROCEDURE crear_lote_ponedora(
