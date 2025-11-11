@@ -56,3 +56,58 @@ http://127.0.0.1:8000/api/registrarMortalidad/ PUT
   "lote_id": 1,
   "cantidad_muerta": 5
 }
+
+
+
+
+
+
+
+#ponedoras
+POST http://127.0.0.1:8000/api/ponedoras/crearLotePonedora/
+{
+    "cantidad_gallinas": 1000,
+    "precio_unitario": 15.50,
+    "fecha_inicio": "2024-01-15"
+}
+
+http://127.0.0.1:8000/api/ponedoras/lotesPonedoras/ GET
+
+http://127.0.0.1:8000/api/ponedoras/detalleLotePonedora/<id_lote>/ GET
+
+POST http://127.0.0.1:8000/api/ponedoras/agregarInsumo/
+{
+    "lotes_id": 1,
+    "nombre": "Alimento Inicial",
+    "cantidad": 100,
+    "unidad": "kg",
+    "precio": 45.50,
+    "tipo": "Alimento",
+    "fecha": "2024-01-15"
+}
+ 
+POST http://127.0.0.1:8000/api/ponedoras/registroHuevos/
+{
+    "lote_id": 1,
+    "fecha": "2024-01-16",
+    "cantidad_huevos": 850
+}
+
+POST http://127.0.0.1:8000/api/ponedoras/registroPesoPonedora/
+{
+    "lotes_id": 1,
+    "fecha": "2024-01-16",
+    "peso_promedio": 1.75
+}
+
+post http://127.0.0.1:8000/api/ponedoras/precioVentaHuevos/
+{
+    "lote_id": 1,
+    "precio_por_huevo": 0.25,
+    "fecha_inicio": "2024-01-01"
+}
+
+http://127.0.0.1:8000/api/ponedoras/calcularGanaciasHuevos/1/?fecha_inicio=2024-01-01&fecha_fin=2024-01-31 GET
+
+
+http://127.0.0.1:8000/api/ponedoras/resumenGanancias/1/ GET
