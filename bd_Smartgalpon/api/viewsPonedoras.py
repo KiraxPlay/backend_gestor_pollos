@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render
+from django.db import connection
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
@@ -13,95 +14,79 @@ from.ponedoras import LotePonedora , InsumosPonedora , RegistroPesoPonedora , Re
 def crearLotePonedora(request):
     try:
         data = json.loads(request.body)
-        lote = LotePonedora.objects.create(
-            nombre=data['nombre'],
-            cantidad_gallinas=data['cantidad_gallinas'],
-            precio_unitario=data['precio_unitario'],
-            fecha_inicio=data['fecha_inicio'],
-            cantidad_muerto=data.get('cantidad_muerto', 0),
-            estado=data.get('estado', 0),
-            edad_semanas=data.get('edad_semanas', 0)
-        )
-        return JsonResponse({'success': True, 'lote_id': lote.id})
+        with connection.cursor() as cursor:
+            cursor.callproc('crear_lote_ponedora', [
+                data['nombre'],
+                data['cantidad_gallinas'],
+                data['precio_unitario'],
+                data['fecha_inicio']
+            ])
+            result = cursor.fetchone()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Lote creado correctamente',
+            'lote_id': result[0] if result else None
+        })
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
     
 @api_view(['GET'])
 def detalleLotePonedora(request, lote_id):
     try:
-        lote = LotePonedora.objects.get(id=lote_id)
-        insumos = InsumosPonedora.objects.filter(lotes_id=lote)
-        registros_peso = RegistroPesoPonedora.objects.filter(lotes_id=lote)
-        registros_huevos = RegistroHuevos.objects.filter(lote=lote)
+        with connection.cursor() as cursor:
+            # Llamamos a un SP que devuelva varios resultados
+            cursor.callproc('sp_detalle_lote_ponedora', [lote_id])
 
-        lote_data = {
-            'id': lote.id,
-            'nombre': lote.nombre,
-            'cantidad_gallinas': lote.cantidad_gallinas,
-            'precio_unitario': str(lote.precio_unitario),
-            'fecha_inicio': lote.fecha_inicio.isoformat(),
-            'cantidad_muerto': lote.cantidad_muerto,
-            'estado': lote.estado,
-            'edad_semanas': lote.edad_semanas
-        }
+            # Django no soporta múltiples conjuntos de resultados directamente,
+            # pero puedes obtener cada uno con cursor.nextset()
+            lote_data = []
+            insumos_data = []
+            registros_peso_data = []
+            registros_huevos_data = []
 
-        insumos_data = [
-            {
-                'id': insumo.id,
-                'nombre': insumo.nombre,
-                'cantidad': insumo.cantidad,
-                'unidad': insumo.unidad,
-                'precio': str(insumo.precio),
-                'tipo': insumo.tipo,
-                'fecha': insumo.fecha.isoformat()
-            } for insumo in insumos
-        ]
+            # Primer conjunto → Lote
+            columns = [col[0] for col in cursor.description]
+            lote_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-        registros_peso_data = [
-            {
-                'id': registro.id,
-                'fecha': registro.fecha.isoformat(),
-                'peso_promedio': str(registro.peso_promedio)
-            } for registro in registros_peso
-        ]
+            # Siguiente conjunto → Insumos
+            cursor.nextset()
+            columns = [col[0] for col in cursor.description]
+            insumos_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-        registros_huevos_data = [
-            {
-                'id': registro.id,
-                'fecha': registro.fecha.isoformat(),
-                'cantidad_huevos': registro.cantidad_huevos
-            } for registro in registros_huevos
-        ]
+            # Siguiente conjunto → Registros de peso
+            cursor.nextset()
+            columns = [col[0] for col in cursor.description]
+            registros_peso_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+            # Siguiente conjunto → Registros de huevos
+            cursor.nextset()
+            columns = [col[0] for col in cursor.description]
+            registros_huevos_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        if not lote_data:
+            return JsonResponse({'success': False, 'error': 'Lote no encontrado'}, status=404)
 
         return JsonResponse({
-            'lote': lote_data,
+            'success': True,
+            'lote': lote_data[0],
             'insumos': insumos_data,
             'registros_peso': registros_peso_data,
             'registros_huevos': registros_huevos_data
         })
-    except LotePonedora.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Lote no encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
 
 @api_view(['GET'])
 def ListaPonedoras(request):
     try:
-        lotes = LotePonedora.objects.all()
-        huevos = RegistroHuevos.objects.only('cantidad_huevos')
-        lotes_data = [
-            {
-                'id': lote.id,
-                'nombre': lote.nombre,
-                'cantidad_gallinas': lote.cantidad_gallinas,
-                'precio_unitario': str(lote.precio_unitario),
-                'fecha_inicio': lote.fecha_inicio.isoformat(),
-                'cantidad_muerto': lote.cantidad_muerto,
-                'estado': lote.estado,
-                'edad_semanas': lote.edad_semanas,
-                'huevos': [registro.cantidad_huevos for registro in huevos if registro.lote_id == lote.id]
-            } for lote in lotes
-        ]
-        return JsonResponse({'lotes': lotes_data})
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_listar_lotes_ponedoras')
+            columns = [col[0] for col in cursor.description]
+            lotes = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return JsonResponse({'success': True, 'lotes': lotes})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)

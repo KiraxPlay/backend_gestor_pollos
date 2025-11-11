@@ -30,6 +30,7 @@ http://127.0.0.1:8000/api/eliminarInsumo/id_insumo/  DELETE
 {
   "lote_id": id_lote
 }
+
 #ejemplo 
 http://127.0.0.1:8000/api/eliminarInsumo/4/
 {
@@ -38,3 +39,20 @@ http://127.0.0.1:8000/api/eliminarInsumo/4/
 
 
 http://127.0.0.1:8000/api/lotes/ GET
+
+http://127.0.0.1:8000/api/registrarPeso/ post
+
+{
+  "lotes_id": 1,
+  "peso_promedio": 2.45
+}
+
+pruebas con endpoints tienen triggers
+
+http://127.0.0.1:8000/api/historialMortalidad/1/  GET
+
+http://127.0.0.1:8000/api/registrarMortalidad/ PUT
+{
+  "lote_id": 1,
+  "cantidad_muerta": 5
+}

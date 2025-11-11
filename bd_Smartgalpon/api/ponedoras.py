@@ -9,7 +9,8 @@ class LotePonedora(models.Model):
     fecha_inicio = models.DateField()
     cantidad_muerto = models.IntegerField(default=0)
     estado = models.IntegerField(default=0)
-    edad_semanas = models.IntegerField(default=0)  # Nueva columna
+    edad_semanas = models.IntegerField(default=0) 
+    muertos_semanales = models.IntegerField(default=0)
     
 
     def __str__(self):
