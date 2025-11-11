@@ -116,3 +116,129 @@ def agregarInsumoPonedora(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+
+@csrf_exempt
+@api_view(['POST'])
+def agregarRegistroHuevos(request):
+    try:
+        data = json.loads(request.body)
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_agregar_registro_huevos', [
+                data['lote_id'],
+                data['fecha'],
+                data['cantidad_huevos']
+            ])
+            result = cursor.fetchone()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Registro de huevos agregado correctamente',
+            'registro_id': result[0] if result else None
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+
+@csrf_exempt
+@api_view(['POST'])
+def agregarRegistroPeso(request):
+    try:
+        data = json.loads(request.body)
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_agregar_registro_peso', [
+                data['lotes_id'],
+                data['fecha'],
+                data['peso_promedio']
+            ])
+            result = cursor.fetchone()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Registro de peso agregado correctamente',
+            'registro_id': result[0] if result else None
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    
+@api_view(['POST'])
+def establecerPrecioHuevo(request):
+    try:
+        data = json.loads(request.body)
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_establecer_precio_huevo', [
+                data['lote_id'],
+                data['precio_por_huevo'],
+                data['fecha_inicio']
+            ])
+            result = cursor.fetchone()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Precio establecido correctamente',
+            'precio_id': result[0] if result else None
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+
+@api_view(['GET'])
+def calcularGananciaHuevos(request, lote_id):
+    try:
+        # Obtener parámetros de la URL
+        fecha_inicio = request.GET.get('fecha_inicio', None)
+        fecha_fin = request.GET.get('fecha_fin', None)
+        
+        # Validar que existan los parámetros
+        if not fecha_inicio or not fecha_fin:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Los parámetros fecha_inicio y fecha_fin son requeridos'
+            }, status=400)
+        
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_calcular_ganancia_lote', [
+                lote_id, fecha_inicio, fecha_fin
+            ])
+            columns = [col[0] for col in cursor.description]
+            result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        return JsonResponse({
+            'success': True,
+            'lote_id': lote_id,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'ganancia': result[0] if result else {}
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    
+@api_view(['GET'])
+def resumenGananciaLote(request, lote_id):
+  
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_resumen_ganancia_lote', [lote_id])
+            
+            # Verificar si hay resultados
+            if cursor.description:
+                columns = [col[0] for col in cursor.description]
+                result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            else:
+                result = []
+        
+        if not result:
+            return JsonResponse({
+                'success': False,
+                'error': f'Lote {lote_id} no encontrado'
+            }, status=404)
+        
+        return JsonResponse({
+            'success': True,
+            'resumen': result[0]
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
