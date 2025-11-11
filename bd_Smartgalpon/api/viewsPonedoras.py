@@ -16,7 +16,6 @@ def crearLotePonedora(request):
         data = json.loads(request.body)
         with connection.cursor() as cursor:
             cursor.callproc('crear_lote_ponedora', [
-                data['nombre'],
                 data['cantidad_gallinas'],
                 data['precio_unitario'],
                 data['fecha_inicio']
@@ -26,7 +25,8 @@ def crearLotePonedora(request):
         return JsonResponse({
             'success': True,
             'message': 'Lote creado correctamente',
-            'lote_id': result[0] if result else None
+            'lote_id': result[0] if result else None,
+            'nombre_lote': result[1] if result else None
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
@@ -88,5 +88,31 @@ def ListaPonedoras(request):
             lotes = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
         return JsonResponse({'success': True, 'lotes': lotes})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    
+@csrf_exempt
+@api_view(['POST'])
+def agregarInsumoPonedora(request):
+    try:
+        data = json.loads(request.body)
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_agregar_insumo_ponedora', [
+                data['lotes_id'],
+                data['nombre'],
+                data['cantidad'],
+                data['unidad'],
+                data['precio'],
+                data['tipo'],
+                data['fecha']
+            ])
+            result = cursor.fetchone()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Insumo agregado correctamente',
+            'insumo_id': result[0] if result else None
+        })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
