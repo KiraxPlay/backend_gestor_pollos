@@ -1,3 +1,4 @@
+import datetime
 import json
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -5,8 +6,6 @@ from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from datetime import date
-
-from .models import Lote, Insumos, RegistroPeso, RegistroMortalidad
 from .factories.factory_insumo import InsumoFactory
 
 
@@ -56,6 +55,7 @@ def detalle_lote(request, lote_id):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 @csrf_exempt
+@api_view(['POST'])
 def agregar_insumo(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -84,15 +84,20 @@ def agregar_insumo(request):
     return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
 
 @csrf_exempt
+@api_view(['POST'])
 def crearLote(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
+            print(f"📥 Django recibió crearLote: {data}")
 
             cantidad_pollos = data.get("cantidad_pollos")
             precio_unitario = data.get("precio_unitario")
-            fecha_inicio = data.get("fecha_inicio")  # formato: "2025-10-06"
-            edad_lote = 0
+            fecha_inicio = data.get("fecha_inicio")
+
+            if not cantidad_pollos or not precio_unitario or not fecha_inicio:
+                return JsonResponse({"success": False, "error": "Faltan datos obligatorios"}, status=400)
+
 
             with connection.cursor() as cursor:
                 cursor.callproc("sp_crear_nuevo_lote", [cantidad_pollos, precio_unitario, fecha_inicio])
@@ -120,32 +125,60 @@ def listarLotes(request):
     return JsonResponse(data, safe=False)
 
 @csrf_exempt
+@api_view(['POST'])
 def registrar_peso(request):
     if request.method == 'POST':
         try:
-            # Leer datos desde JSON
             data = json.loads(request.body)
             lotes_id = data.get('lotes_id')
             peso_promedio = data.get('peso_promedio')
-            fecha = date.today()
+            fecha = data.get('fecha')
+            
+            # Si no viene fecha, usar la actual
+            if not fecha:
+                fecha = date.today()
+            elif isinstance(fecha, str):
+                # Convertir string a date si Flutter envía fecha
+                from datetime import datetime
+                fecha = datetime.strptime(fecha, '%Y-%m-%d').date()
 
-            # Validar que no sean nulos
+            # Validar
             if not lotes_id or not peso_promedio:
-                return JsonResponse({'error': 'Faltan datos obligatorios'}, status=400)
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Faltan datos obligatorios: lotes_id y peso_promedio'
+                }, status=400)
 
-            # Llamar al procedimiento almacenado
+            # Llamar al procedimiento
             with connection.cursor() as cursor:
                 cursor.callproc('sp_registrar_peso', [lotes_id, fecha, peso_promedio])
+                result = cursor.fetchone()
 
-            return JsonResponse({'message': 'Peso registrado correctamente'}, status=201)
+            return JsonResponse({
+                'success': True,
+                'message': 'Peso registrado correctamente',
+                'registro_id': result[0] if result else None
+            }, status=201)
         
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-    
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
-
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
 
 @csrf_exempt
+@api_view(['DELETE'])
+def eliminar_lote(request, lote_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_eliminar_lote', [lote_id])
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+@csrf_exempt
+@api_view(['PUT'])
 def registrar_mortalidad(request):
     """Registra nueva mortalidad - el trigger se encarga del registro"""
     if request.method == 'PUT':
@@ -175,7 +208,6 @@ def registrar_mortalidad(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
-
 
 def historial_mortalidad(request, lote_id):
     """Obtiene el historial de mortalidad para un lote específico"""
@@ -242,3 +274,5 @@ def obtener_edad_lote(request, lote_id):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+

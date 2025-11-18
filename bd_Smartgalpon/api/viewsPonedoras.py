@@ -117,6 +117,23 @@ def agregarInsumoPonedora(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
+@api_view(['DELETE'])
+def eliminarInsumoPonedora(request, insumo_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_eliminar_insumo_ponedora', [insumo_id])
+            result = cursor.fetchone()
+
+        return JsonResponse({
+            'success': True,
+            'message': result[0] if result else 'Insumo eliminado correctamente',
+            'insumo_eliminado': result[1] if result else insumo_id
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'error': str(e)
+        }, status=400)
 
 @csrf_exempt
 @api_view(['POST'])
@@ -242,3 +259,21 @@ def resumenGananciaLote(request, lote_id):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+@api_view(['DELETE'])
+def eliminarLotePonedora(request, lote_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_eliminar_lote_ponedora', [lote_id])
+            result = cursor.fetchone()
+
+        return JsonResponse({
+            'success': True,
+            'message': result[0] if result else 'Lote eliminado correctamente',
+            'lote_eliminado': result[1] if result else lote_id
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'error': str(e)
+        }, status=400)
