@@ -263,6 +263,17 @@ CREATE TABLE costos_adicionales (
     FOREIGN KEY (lote_id) REFERENCES lote_ponedora(id)
 );
 
+DELIMITER //
+CREATE PROCEDURE sp_eliminar_lote(
+    IN p_lote_id INT
+)
+BEGIN
+    DELETE FROM lote_ponedora
+    WHERE id = p_lote_id AND estado = 0;
+END //
+DELIMITER ;
+
+
 
 DELIMITER //
 CREATE PROCEDURE sp_agregar_costo_adicional(
