@@ -72,6 +72,9 @@ END$$
 
 DELIMITER ;
 
+
+
+
 --Motrar o en listar todos los lotes
 DELIMITER $$
 CREATE PROCEDURE sp_listar_lotes()
@@ -158,7 +161,56 @@ BEGIN
 END //
 DELIMITER ;
 
-
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_lote_ponedora`(
+    IN p_lote_id INT
+)
+BEGIN
+    DECLARE lote_existe INT DEFAULT 0;
+    DECLARE error_msg VARCHAR(255);
+    
+    -- Verificar si el lote existe
+    SELECT COUNT(*) INTO lote_existe 
+    FROM lote_ponedora 
+    WHERE id = p_lote_id;
+    
+    IF lote_existe = 0 THEN
+        SET error_msg = CONCAT('El lote con ID ', p_lote_id, ' no existe');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_msg;
+    ELSE
+        -- Iniciar transacción para asegurar integridad
+        START TRANSACTION;
+        
+        -- Eliminar registros relacionados (debido a FOREIGN KEY CASCADE se eliminarán automáticamente)
+        -- Pero por si acaso, los eliminamos explícitamente
+        
+        -- 1. Eliminar registros de huevos
+        DELETE FROM registro_huevos WHERE lote_id = p_lote_id;
+        
+        -- 2. Eliminar insumos
+        DELETE FROM insumos_ponedora WHERE lotes_id = p_lote_id;
+        
+        -- 3. Eliminar registros de peso (si existe la tabla)
+        DELETE FROM registro_peso_ponedora WHERE lotes_id = p_lote_id;
+        
+        -- 4. Eliminar precios de venta de huevos
+        DELETE FROM precio_venta_huevos WHERE lote_id = p_lote_id;
+        
+        -- 5. Eliminar costos adicionales (si existe la tabla)
+        DELETE FROM costos_adicionales WHERE lote_id = p_lote_id;
+        
+        -- 6. Finalmente eliminar el lote
+        DELETE FROM lote_ponedora WHERE id = p_lote_id;
+        
+        -- Confirmar transacción
+        COMMIT;
+        
+        SELECT 
+            'Lote eliminado correctamente' AS mensaje,
+            p_lote_id AS lote_eliminado;
+    END IF;
+END$$
+DELIMITER ;
 
 
 --triggers 
@@ -199,6 +251,12 @@ BEGIN
 END //
 DELIMITER ;
 
+CREATE TRIGGER `tr_activar_lote_despues_insumo` AFTER INSERT ON `insumos_ponedora`
+ FOR EACH ROW BEGIN
+    UPDATE lote_ponedora
+    SET estado = 1
+    WHERE id = NEW.lotes_id;
+END
 
 
 
@@ -263,14 +321,152 @@ CREATE TABLE costos_adicionales (
     FOREIGN KEY (lote_id) REFERENCES lote_ponedora(id)
 );
 
+
 DELIMITER //
-CREATE PROCEDURE sp_eliminar_lote(
+CREATE PROCEDURE sp_eliminar_lote_ponedora(
     IN p_lote_id INT
 )
 BEGIN
     DELETE FROM lote_ponedora
     WHERE id = p_lote_id AND estado = 0;
 END //
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_agregar_registro_peso`(
+    IN p_lotes_id INT,
+    IN p_fecha DATE,
+    IN p_peso_promedio DECIMAL(10,2)
+)
+BEGIN
+    DECLARE lote_existe INT;
+    
+    -- Verificar si el lote existe
+    SELECT COUNT(*) INTO lote_existe 
+    FROM lote_ponedora 
+    WHERE id = p_lotes_id;
+    
+    IF lote_existe = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'El lote especificado no existe';
+    ELSE
+        -- Insertar el registro de peso
+        INSERT INTO registro_peso_ponedora (
+            lotes_id, fecha, peso_promedio
+        )
+        VALUES (
+            p_lotes_id, p_fecha, p_peso_promedio
+        );
+        
+        SELECT 
+            LAST_INSERT_ID() AS registro_id,
+            'Registro de peso agregado correctamente' AS mensaje;
+    END IF;
+END$$
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_agregar_registro_huevos`(
+    IN p_lote_id INT,
+    IN p_fecha DATE,
+    IN p_cantidad_huevos INT
+)
+BEGIN
+    DECLARE lote_existe INT;
+    
+    -- Verificar si el lote existe
+    SELECT COUNT(*) INTO lote_existe 
+    FROM lote_ponedora 
+    WHERE id = p_lote_id;
+    
+    IF lote_existe = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'El lote especificado no existe';
+    ELSE
+        -- Insertar el registro de huevos
+        INSERT INTO registro_huevos (
+            lote_id, fecha, cantidad_huevos
+        )
+        VALUES (
+            p_lote_id, p_fecha, p_cantidad_huevos
+        );
+        
+        SELECT 
+            LAST_INSERT_ID() AS registro_id,
+            'Registro de huevos agregado correctamente' AS mensaje;
+    END IF;
+END$$
+DELIMITER ;
+
+
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_agregar_insumo_ponedora`(
+    IN p_lotes_id INT,
+    IN p_nombre VARCHAR(100),
+    IN p_cantidad INT,
+    IN p_unidad VARCHAR(50),
+    IN p_precio DECIMAL(10,2),
+    IN p_tipo ENUM('Alimento', 'Medicamento', 'Vacuna', 'Vitamina', 'Desinfectante', 'Otro'),
+    IN p_fecha DATE
+)
+BEGIN
+    DECLARE lote_existe INT;
+    
+    -- Verificar si el lote existe
+    SELECT COUNT(*) INTO lote_existe 
+    FROM lote_ponedora 
+    WHERE id = p_lotes_id;
+    
+    IF lote_existe = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'El lote especificado no existe';
+    ELSE
+        -- Insertar el insumo
+        INSERT INTO insumos_ponedora (
+            lotes_id, nombre, cantidad, unidad, precio, tipo, fecha
+        )
+        VALUES (
+            p_lotes_id, p_nombre, p_cantidad, p_unidad, p_precio, p_tipo, p_fecha
+        );
+        
+        SELECT 
+            LAST_INSERT_ID() AS insumo_id,
+            'Insumo agregado correctamente' AS mensaje;
+    END IF;
+END$$
+DELIMITER ;
+
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_insumo_ponedora`(
+    IN p_insumo_id INT
+)
+BEGIN
+    DECLARE insumo_existe INT DEFAULT 0;
+    DECLARE error_msg VARCHAR(255);
+    
+    -- Verificar si el insumo existe
+    SELECT COUNT(*) INTO insumo_existe 
+    FROM insumos_ponedora 
+    WHERE id = p_insumo_id;
+    
+    IF insumo_existe = 0 THEN
+        SET error_msg = CONCAT('El insumo con ID ', p_insumo_id, ' no existe');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_msg;
+    ELSE
+        -- Eliminar el insumo
+        DELETE FROM insumos_ponedora 
+        WHERE id = p_insumo_id;
+        
+        SELECT 
+            'Insumo eliminado correctamente' AS mensaje,
+            p_insumo_id AS insumo_eliminado;
+    END IF;
+END$$
 DELIMITER ;
 
 
