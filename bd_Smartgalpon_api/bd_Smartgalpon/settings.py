@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure--*s9)0j@^jbirajc*m=qa92s=o5j+s817@x@drg+!c-80u%(mp)')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure--*s9)0j@^jbirajc*m=qa92s=o5j+s817@x@drg+!c-80u%(mp')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 #por el momento no se usara autenticacion ni permisos
 REST_FRAMEWORK = {
@@ -112,11 +111,11 @@ WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('MYSQLDATABASE', default='bd_smartgalpon'),
-        'USER': config('MYSQLUSER', default='root'),
-        'PASSWORD': config('MYSQLPASSWORD', default=''),
-        'HOST': config('MYSQLHOST', default='localhost'),
-        'PORT': config('MYSQLPORT', default='3306'),
+        'NAME': os.environ.get('MYSQLDATABASE', 'bd_smartgalpon'),
+        'USER': os.environ.get('MYSQLUSER', 'root'),
+        'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),
+        'HOST': os.environ.get('MYSQLHOST', 'localhost'),
+        'PORT': os.environ.get('MYSQLPORT', '3306'),
     }
 }
 
