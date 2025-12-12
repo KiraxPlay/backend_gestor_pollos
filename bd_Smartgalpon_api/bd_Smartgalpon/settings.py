@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--*s9)0j@^jbirajc*m=qa92s=o5j+s817@x@drg+!c-80u%(mp'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure--*s9)0j@^jbirajc*m=qa92s=o5j+s817@x@drg+!c-80u%(mp)')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 #por el momento no se usara autenticacion ni permisos
 REST_FRAMEWORK = {
@@ -106,14 +108,15 @@ WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Para Railway, lee variables directamente del MySQL Service
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME':'bd_smartgalpon',
-        'USER':'root',
-        'PASSWORD':'',
-        'HOST':'localhost',
-        'PORT':'3306',
+        'NAME': config('MYSQLDATABASE', default='bd_smartgalpon'),
+        'USER': config('MYSQLUSER', default='root'),
+        'PASSWORD': config('MYSQLPASSWORD', default=''),
+        'HOST': config('MYSQLHOST', default='localhost'),
+        'PORT': config('MYSQLPORT', default='3306'),
     }
 }
 
