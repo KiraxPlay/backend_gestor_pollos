@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: smartgalpon-api
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn bd_Smartgalpon.wsgi --chdir bd_Smartgalpon_api"
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MYSQLDATABASE
+        value: bd_smartgalpon
+      - key: MYSQLUSER
+        value: root
+      - key: MYSQLPASSWORD
+        sync: false
+      - key: MYSQLHOST
+        value: TU_HOST_MYSQL
+      - key: MYSQLPORT
+        value: 3306
