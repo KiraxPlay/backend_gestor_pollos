@@ -1,8 +1,14 @@
+# requirements.txt ACTUALIZADO
 asgiref==3.9.2
 Django==4.2
 djangorestframework==3.16.1
-mysqlclient==2.2.7
+psycopg2-binary==2.9.9           # Para PostgreSQL (Supabase)
+dj-database-url==2.1.0           # Para parsear DATABASE_URL
+whitenoise==6.6.0                # Para servir archivos estáticos
+python-decouple==3.8
+django-cors-headers==4.5.0       # Para CORS
 pillow==11.3.0
 sqlparse==0.5.3
 typing-extensions==4.15.0
 tzdata==2025.2
+gunicorn==23.0.0
