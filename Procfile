@@ -1,1 +1,1 @@
-web: gunicorn bd_Smartgalpon.wsgi --chdir bd_Smartgalpon_api --log-file -
+web: gunicorn bd_Smartgalpon.wsgi:application --workers=3 --threads=4 --bind=0.0.0.0:$PORT --timeout=120
