@@ -8,12 +8,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET KEY
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-for-dev-only')
 
-# DEBUG
+# DEBUG - En producción debe ser False
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# ALLOWED HOSTS
+# ALLOWED HOSTS - SIN https://
 ALLOWED_HOSTS = [
-    'https://backend-gestor-pollos.onrender.com',
+    'backend-gestor-pollos.onrender.com',  # SIN https://
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
@@ -63,18 +63,22 @@ MIDDLEWARE = [
 # -----------------------------------------------------------------------------
 # CORS / CSRF
 # -----------------------------------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Para desarrollo, en producción especifica orígenes
+
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
     "http://localhost:8000",
-    "http://10.0.2.2:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
     "https://backend-gestor-pollos.onrender.com",
+    # Agrega aquí tu frontend cuando lo despliegues
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://0.0.0.0:8000",
-    "https://backend-gestor-pollos.onrender.com,
+    "https://backend-gestor-pollos.onrender.com",  # NOTA: Faltaba cerrar comillas en tu código
 ]
 
 # -----------------------------------------------------------------------------
@@ -101,35 +105,55 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 
 # -----------------------------------------------------------------------------
-# DATABASE CONFIGURATION (RENDER + LOCAL)
+# DATABASE CONFIGURATION (SUPABASE POSTGRESQL)
 # -----------------------------------------------------------------------------
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Obtener URL de Supabase desde variables de entorno
+DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Configuración para Render (PostgreSQL)
+    # Configuración para SUPABASE (PostgreSQL en producción)
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
+            ssl_require=True  # IMPORTANTE para Supabase
         )
     }
 else:
-    # Configuración para desarrollo local (MySQL)
+    # Configuración para desarrollo local (SQLite)
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('MYSQLDATABASE', 'bd_smartgalpon'),
-            'USER': os.environ.get('MYSQLUSER', 'root'),
-            'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),
-            'HOST': os.environ.get('MYSQLHOST', 'localhost'),
-            'PORT': os.environ.get('MYSQLPORT', '3306'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'connect_timeout': 10,
-            }
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# -----------------------------------------------------------------------------
+# PASSWORD VALIDATION
+# -----------------------------------------------------------------------------
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+# -----------------------------------------------------------------------------
+# INTERNATIONALIZATION
+# -----------------------------------------------------------------------------
+LANGUAGE_CODE = 'es-es'
+TIME_ZONE = 'America/Lima'  # Cambia según tu zona horaria
+USE_I18N = True
+USE_TZ = True
 
 # -----------------------------------------------------------------------------
 # STATIC FILES FOR RENDER
@@ -138,4 +162,18 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# -----------------------------------------------------------------------------
+# DEFAULT AUTO FIELD
+# -----------------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# -----------------------------------------------------------------------------
+# SECURITY SETTINGS FOR PRODUCTION
+# -----------------------------------------------------------------------------
+if not DEBUG:
+    # Seguridad en producción
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True  # Render maneja SSL automáticamente
