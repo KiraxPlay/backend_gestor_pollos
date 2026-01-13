@@ -3,8 +3,8 @@ services:
     name: smartgalpon-api
     env: python
     plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn bd_Smartgalpon.wsgi:application"
+    buildCommand: "cd bd_Smartgalpon_api && pip install -r ../requirements.txt"
+    startCommand: "cd bd_Smartgalpon_api && gunicorn bd_Smartgalpon.wsgi:application"
     envVars:
       - key: DEBUG
         value: False
@@ -13,4 +13,4 @@ services:
       - key: PYTHON_VERSION
         value: 3.9.0
       - key: DATABASE_URL
-        sync: false  # Esto lo configurarás manualmente
+        sync: false  # IMPORTANTE: Aquí pondrás tu URL de Supabase
