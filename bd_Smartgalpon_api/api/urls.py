@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'engorde'
+
 urlpatterns = [
     path('crearLote/', views.crearLote, name='crearLote'),
     path('lotes/', views.listarLotes, name='listarLotes'),
