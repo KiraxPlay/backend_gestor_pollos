@@ -4,12 +4,11 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "cd bd_Smartgalpon_api && gunicorn bd_Smartgalpon.wsgi:application"
+    startCommand: "gunicorn bd_Smartgalpon.wsgi:application"
     envVars:
       - key: DEBUG
         value: False
       - key: SECRET_KEY
         generateValue: true
-      # Configuración de base de datos - IMPORTANTE
       - key: DATABASE_URL
-        sync: false  # Esto debes configurarlo en el dashboard de Render
+        sync: false
