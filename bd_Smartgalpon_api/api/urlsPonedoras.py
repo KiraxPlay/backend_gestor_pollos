@@ -1,6 +1,7 @@
 from django.urls import path
 from . import viewsPonedoras
 
+app_name = 'ponedoras'
 
 urlpatterns = [    path('crearLotePonedora/', viewsPonedoras.crearLotePonedora, name='crearLotePonedora'),
                    path('detalleLotePonedora/<int:lote_id>/', viewsPonedoras.detalleLotePonedora, name='detalleLotePonedora'),
