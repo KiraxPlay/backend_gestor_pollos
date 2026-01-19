@@ -107,28 +107,34 @@ WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 # -----------------------------------------------------------------------------
 # DATABASE CONFIGURATION (SUPABASE POSTGRESQL)
 # -----------------------------------------------------------------------------
-# Obtener URL de Supabase desde variables de entorno
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Configuración para SUPABASE (PostgreSQL en producción)
+    # Configuración para SUPABASE con SSL FORZADO
+    db_config = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True  # ESTO ES CRÍTICO
+    )
+    
+    # Forzar parámetros SSL adicionales
+    db_config['OPTIONS'] = {
+        'sslmode': 'require',
+        'sslrootcert': 'system',  # Usar certificados del sistema
+    }
+    
     DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True  # IMPORTANTE para Supabase
-        )
+        'default': db_config
     }
 else:
-    # Configuración para desarrollo local (SQLite)
+    # Configuración para desarrollo local
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
 # -----------------------------------------------------------------------------
 # PASSWORD VALIDATION
 # -----------------------------------------------------------------------------
