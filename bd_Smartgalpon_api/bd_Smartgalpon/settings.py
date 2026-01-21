@@ -78,7 +78,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://0.0.0.0:8000",
-    "https://backend-gestor-pollos.onrender.com",  # NOTA: Faltaba cerrar comillas en tu código
+    "https://backend-gestor-pollos.onrender.com",
 ]
 
 # -----------------------------------------------------------------------------
@@ -105,36 +105,36 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 
 # -----------------------------------------------------------------------------
-# DATABASE CONFIGURATION (SUPABASE POSTGRESQL)
+# DATABASE - CAMBIADO A SUPABASE (POSTGRESQL)
 # -----------------------------------------------------------------------------
+# Obtener DATABASE_URL de variables de entorno
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Configuración para SUPABASE con SSL FORZADO
-    db_config = dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True  # ESTO ES CRÍTICO
-    )
-    
-    # Forzar parámetros SSL adicionales
-    db_config['OPTIONS'] = {
-        'sslmode': 'require',
-        'sslrootcert': 'system',  # Usar certificados del sistema
-    }
-    
+    # Conexión a Supabase (PostgreSQL en producción)
     DATABASES = {
-        'default': db_config
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
     }
+    
+    # Configuración de SSL para Supabase
+    if 'sslmode' not in DATABASE_URL:
+        DATABASES['default']['OPTIONS'] = {
+            'sslmode': 'verify-full',
+        }
 else:
-    # Configuración para desarrollo local
+    # Fallback a SQLite para desarrollo local
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 # -----------------------------------------------------------------------------
 # PASSWORD VALIDATION
 # -----------------------------------------------------------------------------
@@ -157,16 +157,27 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # -----------------------------------------------------------------------------
 LANGUAGE_CODE = 'es-es'
-TIME_ZONE = 'America/Lima'  # Cambia según tu zona horaria
+TIME_ZONE = 'America/Bogota'  # Cambia según tu zona horaria
 USE_I18N = True
 USE_TZ = True
 
 # -----------------------------------------------------------------------------
-# STATIC FILES FOR RENDER
+# STATIC FILES - CONFIGURACIÓN PARA RENDER
 # -----------------------------------------------------------------------------
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Directorios adicionales de static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# -----------------------------------------------------------------------------
+# MEDIA FILES (si necesitas subir archivos)
+# -----------------------------------------------------------------------------
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # -----------------------------------------------------------------------------
 # DEFAULT AUTO FIELD
@@ -174,12 +185,24 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # -----------------------------------------------------------------------------
-# SECURITY SETTINGS FOR PRODUCTION
+# SUPABASE CONFIGURATION
+# -----------------------------------------------------------------------------
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_KEY', '')
+
+# -----------------------------------------------------------------------------
+# SECURITY SETTINGS PARA PRODUCCIÓN
 # -----------------------------------------------------------------------------
 if not DEBUG:
-    # Seguridad en producción
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
+    # HTTPS settings
+    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = True  # Render maneja SSL automáticamente
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Otros ajustes de seguridad
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
