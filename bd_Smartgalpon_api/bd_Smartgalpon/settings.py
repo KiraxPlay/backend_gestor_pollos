@@ -124,7 +124,7 @@ if DATABASE_URL:
     # Configuración de SSL para Supabase
     if 'sslmode' not in DATABASE_URL:
         DATABASES['default']['OPTIONS'] = {
-            'sslmode': 'verify-full',
+            'sslmode': 'require',
         }
 else:
     # Fallback a SQLite para desarrollo local
