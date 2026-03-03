@@ -111,12 +111,11 @@ WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Conexión a Supabase (PostgreSQL en producción)
-    DATABASES = {
+    # Conexión a render/database
+       DATABASES = {
         'default': dj_database_url.config(
-            default=DATABASE_URL,
+            default=config('DATABASE_URL'),
             conn_max_age=600,
-            conn_health_checks=True,
             ssl_require=True
         )
     }
