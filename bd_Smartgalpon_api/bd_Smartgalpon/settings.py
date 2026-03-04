@@ -105,35 +105,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 
 # -----------------------------------------------------------------------------
-# DATABASE - CAMBIADO A SUPABASE (POSTGRESQL)
+# DATABASE - CAMBIADO A Render base de datos (POSTGRESQL)
 # -----------------------------------------------------------------------------
 # Obtener DATABASE_URL de variables de entorno
 DATABASE_URL = config('DATABASE_URL', default=None)
+DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Conexión a render/database
-       DATABASES = {
-        'default': dj_database_url.config(
-            default=config('DATABASE_URL'),
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
             conn_max_age=600,
             ssl_require=True
         )
     }
-    
-    # Configuración de SSL para Supabase
-    if 'sslmode' not in DATABASE_URL:
-        DATABASES['default']['OPTIONS'] = {
-            'sslmode': 'require',
-        }
 else:
-    # Fallback a SQLite para desarrollo local
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
 # -----------------------------------------------------------------------------
 # PASSWORD VALIDATION
 # -----------------------------------------------------------------------------
