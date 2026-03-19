@@ -4,11 +4,14 @@ from django.db import connection
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from datetime import date
 
 from.ponedoras import LotePonedora , InsumosPonedora , RegistroPesoPonedora , RegistroHuevos
+from rest_framework.permissions import IsAuthenticated
 
+
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['POST'])
 def crearLotePonedora(request):
@@ -30,8 +33,8 @@ def crearLotePonedora(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
     
+@permission_classes([IsAuthenticated])      
 @api_view(['GET'])
 def detalleLotePonedora(request, lote_id):
     try:
@@ -78,7 +81,7 @@ def detalleLotePonedora(request, lote_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-
+@permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def ListaPonedoras(request):
     try:
@@ -91,7 +94,7 @@ def ListaPonedoras(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
-    
+@permission_classes([IsAuthenticated])  
 @csrf_exempt
 @api_view(['POST'])
 def agregarInsumoPonedora(request):
@@ -117,6 +120,7 @@ def agregarInsumoPonedora(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
+@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
 def eliminarInsumoPonedora(request, insumo_id):
     try:
@@ -135,6 +139,7 @@ def eliminarInsumoPonedora(request, insumo_id):
             'error': str(e)
         }, status=400)
 
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['POST'])
 def agregarRegistroHuevos(request):
@@ -156,7 +161,7 @@ def agregarRegistroHuevos(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
-
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['POST'])
 def agregarRegistroPeso(request):
@@ -178,7 +183,7 @@ def agregarRegistroPeso(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
-    
+@permission_classes([IsAuthenticated])   
 @api_view(['POST'])
 def establecerPrecioHuevo(request):
     try:
@@ -199,7 +204,7 @@ def establecerPrecioHuevo(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
-
+@permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def calcularGananciaHuevos(request, lote_id):
     try:
@@ -231,7 +236,7 @@ def calcularGananciaHuevos(request, lote_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
-    
+ 
 @api_view(['GET'])
 def resumenGananciaLote(request, lote_id):
   
@@ -259,7 +264,8 @@ def resumenGananciaLote(request, lote_id):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
-    
+
+@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
 def eliminarLotePonedora(request, lote_id):
     try:

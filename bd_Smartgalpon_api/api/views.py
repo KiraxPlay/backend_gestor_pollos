@@ -4,11 +4,14 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from datetime import date
+
+from rest_framework.permissions import IsAuthenticated
 from .factories.factory_insumo import InsumoFactory
 
 
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['DELETE'])
 def eliminar_insumo(request, insumo_id):
@@ -23,7 +26,8 @@ def eliminar_insumo(request, insumo_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def detalle_lote(request, lote_id):
     try:
         with connection.cursor() as cursor:
@@ -54,6 +58,8 @@ def detalle_lote(request, lote_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
+
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['POST'])
 def agregar_insumo(request):
@@ -83,6 +89,8 @@ def agregar_insumo(request):
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
 
+
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['POST'])
 def crearLote(request):
@@ -112,6 +120,9 @@ def crearLote(request):
 
     return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
 
+
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def listarLotes(request):
     with connection.cursor() as cursor:
         cursor.callproc('sp_listar_lotes')
@@ -124,6 +135,8 @@ def listarLotes(request):
 
     return JsonResponse(data, safe=False)
 
+
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['POST'])
 def registrar_peso(request):
@@ -165,7 +178,9 @@ def registrar_peso(request):
                 'success': False,
                 'error': str(e)
             }, status=500)
-
+            
+            
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['DELETE'])
 def eliminar_lote(request, lote_id):
@@ -177,6 +192,7 @@ def eliminar_lote(request, lote_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
     
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 @api_view(['PUT'])
 def registrar_mortalidad(request):
@@ -208,6 +224,8 @@ def registrar_mortalidad(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
 
 def historial_mortalidad(request, lote_id):
     """Obtiene el historial de mortalidad para un lote específico"""
