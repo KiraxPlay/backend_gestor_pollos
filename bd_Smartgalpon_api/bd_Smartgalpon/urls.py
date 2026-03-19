@@ -5,4 +5,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api/ponedoras/', include('api.urlsPonedoras')),
+    path('api/auth/', include('api.auth_urls')),
+
 ]
