@@ -16,4 +16,3 @@ psycopg-binary==3.2.13
 djangorestframework-simplejwt==5.3.1
 reportlab==4.2.5
 openpyxl==3.1.5
-PYTHON_VERSION = 3.11.0
