@@ -6,7 +6,7 @@ api_patterns = [
     path('', include('api.urls')),
     path('ponedoras/', include('api.urlsPonedoras')),
     path('auth/', include('api.auth_urls')),
-    path('reportes/', include('reportes.urls')),
+    path('reportes/', include('api.reportes.urls')),
 ]
 
 # URLs principales
