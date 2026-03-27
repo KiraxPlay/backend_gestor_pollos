@@ -1,4 +1,4 @@
-# requirements.txt ACTUALIZADO
+# requirements.txt
 asgiref==3.9.2
 Django==4.2
 djangorestframework==3.16.1
@@ -11,8 +11,9 @@ dj-database-url==2.1.0
 python-decouple==3.8
 django-cors-headers==4.5.0
 whitenoise==6.6.0
-# psycopg2-binary no soporta bien Python 3.13 (termina compilando y falla).
-# Usamos psycopg v3 + binarios precompilados (explicito para evitar conflictos del resolver).
-psycopg==3.3.3
-psycopg-binary==3.3.3
+psycopg==3.2.13
+psycopg-binary==3.2.13
 djangorestframework-simplejwt==5.3.1
+reportlab==4.2.5
+openpyxl==3.1.5
+PYTHON_VERSION = 3.11.0

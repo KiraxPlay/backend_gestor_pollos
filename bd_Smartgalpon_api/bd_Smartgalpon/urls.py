@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 
-# Grupos de rutas
+# Grupos de rutas (algo parecido el group de laravel)
 api_patterns = [
     path('', include('api.urls')),
     path('ponedoras/', include('api.urlsPonedoras')),
