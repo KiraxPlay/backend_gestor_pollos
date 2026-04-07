@@ -12,7 +12,6 @@ from rest_framework.permissions import IsAuthenticated
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['POST'])
 def crearLotePonedora(request):
     try:
@@ -95,7 +94,6 @@ def ListaPonedoras(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
 @permission_classes([IsAuthenticated])  
-@csrf_exempt
 @api_view(['POST'])
 def agregarInsumoPonedora(request):
     try:
@@ -140,7 +138,6 @@ def eliminarInsumoPonedora(request, insumo_id):
         }, status=400)
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['POST'])
 def agregarRegistroHuevos(request):
     try:
@@ -162,7 +159,6 @@ def agregarRegistroHuevos(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['POST'])
 def agregarRegistroPeso(request):
     try:
@@ -237,6 +233,7 @@ def calcularGananciaHuevos(request, lote_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
  
+@permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def resumenGananciaLote(request, lote_id):
   

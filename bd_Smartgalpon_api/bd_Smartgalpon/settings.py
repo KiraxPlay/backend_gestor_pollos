@@ -135,20 +135,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bd_Smartgalpon.wsgi.application'
 
 # -----------------------------------------------------------------------------
-# DATABASE - CAMBIADO A Render base de datos (POSTGRESQL)
+# DATABASE - CONFIGURACIÓN PARA SUPABASE
 # -----------------------------------------------------------------------------
-# Obtener DATABASE_URL de variables de entorno
+# Obtener DATABASE_URL de variables de entorno (debe ser la URL de Supabase)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
+    # Configuración para Supabase (PostgreSQL)
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True
+            ssl_require=True  # Supabase requiere SSL
         )
     }
 else:
+    # Base de datos local para desarrollo
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

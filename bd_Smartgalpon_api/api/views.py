@@ -12,7 +12,6 @@ from .factories.factory_insumo import InsumoFactory
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['DELETE'])
 def eliminar_insumo(request, insumo_id):
     try:
@@ -60,7 +59,6 @@ def detalle_lote(request, lote_id):
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['POST'])
 def agregar_insumo(request):
     if request.method == "POST":
@@ -91,7 +89,6 @@ def agregar_insumo(request):
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['POST'])
 def crearLote(request):
     if request.method == "POST":
@@ -137,7 +134,6 @@ def listarLotes(request):
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['POST'])
 def registrar_peso(request):
     if request.method == 'POST':
@@ -181,7 +177,6 @@ def registrar_peso(request):
             
             
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['DELETE'])
 def eliminar_lote(request, lote_id):
     try:
@@ -193,7 +188,6 @@ def eliminar_lote(request, lote_id):
         return JsonResponse({'success': False, 'error': str(e)})
     
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 @api_view(['PUT'])
 def registrar_mortalidad(request):
     """Registra nueva mortalidad - el trigger se encarga del registro"""
